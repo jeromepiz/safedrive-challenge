@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#050b1a">
+    <title>SafeDrive Challenge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        html, body, #app {
+            height: 100%;
+            background: #050b1a;
+            color: #f5f7fa;
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,214,10,0.08), transparent),
+                linear-gradient(rgba(255,214,10,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,214,10,0.025) 1px, transparent 1px);
+            background-size: 100% 100%, 32px 32px, 32px 32px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+        input { font-family: inherit; }
+
+        .app { position: relative; z-index: 1; min-height: 100vh; max-width: 480px; margin: 0 auto; padding: 0 20px 100px; }
+
+        .login-wrap {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px 24px;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
+        .brand-dot { width: 10px; height: 10px; background: #ffd60a; border-radius: 50%; box-shadow: 0 0 12px #ffd60a; animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.9); } }
+        @keyframes blink { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes flashGreen { 0%,100% { box-shadow: 0 0 0 0 rgba(0,214,143,0); } 50% { box-shadow: 0 0 0 8px rgba(0,214,143,0.2); } }
+        @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+        .login-title { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; margin-bottom: 8px; }
+        .login-title .accent { color: #ffd60a; display: block; }
+        .login-subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 36px; line-height: 1.5; }
+
+        .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .field label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: #94a3b8; text-transform: uppercase; }
+        .field input { background: #050b1a; border: 1px solid rgba(255,214,10,0.12); border-radius: 10px; padding: 14px 16px; color: #f5f7fa; font-size: 16px; }
+        .field input:focus { outline: none; border-color: #ffd60a; box-shadow: 0 0 0 3px rgba(255,214,10,0.15); }
+
+        .btn { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; letter-spacing: 0.02em; padding: 14px 20px; border-radius: 12px; border: none; width: 100%; text-align: center; transition: all 0.18s; cursor: pointer; }
+        .btn-primary { background: #ffd60a; color: #050b1a; box-shadow: 0 0 24px rgba(255,214,10,0.25); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(255,214,10,0.45); }
+        .btn-primary:disabled { background: #142347; color: #4b5874; cursor: not-allowed; }
+        .btn-ghost { background: #0a1429; color: #f5f7fa; border: 1px solid rgba(255,214,10,0.12); }
+
+        .error-msg { color: #ff4d6d; font-size: 13px; margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+
+        .dash-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 0 20px; border-bottom: 1px solid rgba(255,214,10,0.12); margin-bottom: 24px; }
+        .user-pill { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; background: #0a1429; border: 1px solid rgba(255,214,10,0.12); padding: 6px 12px; border-radius: 100px; }
+
+        .panel { background: linear-gradient(180deg, #0a1429, #0f1d3a); border: 1px solid rgba(255,214,10,0.12); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; margin-bottom: 16px; }
+        .panel-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .panel-title::before { content: ''; width: 6px; height: 6px; background: #ffd60a; border-radius: 1px; }
+
+        .score-display { text-align: center; padding: 24px 0; }
+        .score-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
+        .score-value { font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 700; color: #ffd60a; letter-spacing: -0.02em; line-height: 1; text-shadow: 0 0 24px rgba(255,214,10,0.35); }
+        .score-unit { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #94a3b8; letter-spacing: 0.15em; margin-top: 6px; }
+        .status-tag { display: inline-block; margin-top: 14px; padding: 6px 14px; border-radius: 100px; background: rgba(255,214,10,0.1); border: 1px solid rgba(255,214,10,0.35); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #ffd60a; }
+
+        .week-progress { display: flex; gap: 6px; margin-top: 16px; }
+        .week-cell { flex: 1; height: 6px; border-radius: 2px; background: #142347; }
+        .week-cell.done { background: #ffd60a; box-shadow: 0 0 8px rgba(255,214,10,0.5); }
+        .week-cell.today { background: #142347; border: 1px solid #ffd60a; animation: blink 1.4s infinite; }
+
+        .mode-card { background: linear-gradient(135deg, #0a1429, #0f1d3a); border: 1px solid rgba(255,214,10,0.12); border-radius: 16px; padding: 20px; margin-bottom: 12px; text-align: left; width: 100%; transition: all 0.2s; cursor: pointer; }
+        .mode-card:hover:not(:disabled) { border-color: rgba(255,214,10,0.35); transform: translateY(-2px); }
+        .mode-card:disabled { opacity: 0.5; cursor: not-allowed; }
+        .mode-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .mode-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: #94a3b8; text-transform: uppercase; }
+        .mode-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+        .mode-desc { font-size: 13px; color: #94a3b8; line-height: 1.4; }
+        .mode-meta { display: flex; gap: 16px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,214,10,0.12); }
+        .mode-meta-item { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; }
+        .mode-meta-item strong { color: #ffd60a; display: block; font-size: 14px; margin-top: 2px; }
+
+        .quiz-wrap { padding-top: 20px; }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; }
+        .quiz-progress { height: 4px; background: #142347; border-radius: 2px; overflow: hidden; margin-bottom: 24px; }
+        .quiz-progress-fill { height: 100%; background: #ffd60a; border-radius: 2px; transition: width 0.4s ease; }
+
+        .timer-ring { width: 80px; height: 80px; margin: 0 auto 24px; position: relative; }
+        .timer-ring svg { transform: rotate(-90deg); }
+        .timer-ring circle { fill: none; stroke-width: 4; }
+        .timer-ring .bg-circle { stroke: #142347; }
+        .timer-ring .progress-circle { stroke: #ffd60a; stroke-linecap: round; transition: stroke-dashoffset 0.1s linear; }
+        .timer-ring.urgent .progress-circle { stroke: #ff4d6d; }
+        .timer-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; }
+
+        .question-text { font-size: 19px; font-weight: 600; line-height: 1.4; margin-bottom: 28px; text-align: center; }
+        .theme-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: #ffd60a; text-transform: uppercase; margin-bottom: 12px; }
+        .vital-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: #ff4d6d; background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.3); padding: 3px 8px; border-radius: 4px; margin-left: 8px; text-transform: uppercase; vertical-align: middle; }
+
+        .option-list { display: flex; flex-direction: column; gap: 10px; }
+        .option { background: #0a1429; border: 1.5px solid rgba(255,214,10,0.12); border-radius: 12px; padding: 16px 18px; text-align: left; font-size: 15px; font-weight: 500; transition: all 0.18s; display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; color: #f5f7fa; }
+        .option:hover { border-color: rgba(255,214,10,0.35); background: #142347; }
+        .option:disabled { cursor: default; }
+        .option-letter { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #ffd60a; background: rgba(255,214,10,0.08); border-radius: 6px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .option.correct { background: rgba(0,214,143,0.12); border-color: #00d68f; animation: flashGreen 0.5s ease; }
+        .option.correct .option-letter { background: #00d68f; color: #050b1a; }
+        .option.wrong { background: rgba(255,77,109,0.12); border-color: #ff4d6d; animation: shake 0.4s ease; }
+        .option.wrong .option-letter { background: #ff4d6d; color: #050b1a; }
+
+        .feedback { margin-top: 20px; padding: 16px; border-radius: 12px; animation: fadeIn 0.3s ease; }
+        .feedback.success { background: rgba(0,214,143,0.1); border: 1px solid rgba(0,214,143,0.3); }
+        .feedback.error { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.3); }
+        .feedback-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .feedback.success .feedback-title { color: #00d68f; }
+        .feedback.error .feedback-title { color: #ff4d6d; }
+        .feedback-points { font-family: 'JetBrains Mono', monospace; margin-left: auto; }
+        .feedback-text { font-size: 13px; line-height: 1.5; color: #f5f7fa; }
+
+        .tabs { display: flex; gap: 6px; margin-bottom: 16px; background: #0a1429; padding: 4px; border-radius: 10px; border: 1px solid rgba(255,214,10,0.12); }
+        .tab { flex: 1; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #94a3b8; text-transform: uppercase; border-radius: 7px; border: none; cursor: pointer; background: transparent; transition: all 0.15s; }
+        .tab.active { background: #ffd60a; color: #050b1a; font-weight: 700; }
+
+        .leader-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #0a1429; border: 1px solid rgba(255,214,10,0.12); border-radius: 12px; margin-bottom: 8px; }
+        .leader-row.podium-1 { border-color: #ffd60a; background: linear-gradient(90deg, rgba(255,214,10,0.08), #0a1429); }
+        .leader-row.is-me { box-shadow: 0 0 0 2px #ffd60a; }
+        .rank { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; width: 36px; text-align: center; color: #94a3b8; }
+        .rank.podium-1 { color: #ffd60a; }
+        .leader-info { flex: 1; }
+        .leader-name { font-weight: 600; font-size: 15px; }
+        .leader-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+        .leader-score { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 18px; color: #ffd60a; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,20,41,0.92); backdrop-filter: blur(16px); border-top: 1px solid rgba(255,214,10,0.12); display: flex; justify-content: space-around; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); z-index: 10; max-width: 480px; margin: 0 auto; }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: #4b5874; text-transform: uppercase; padding: 4px 12px; transition: color 0.15s; background: none; border: none; cursor: pointer; }
+        .nav-btn.active { color: #ffd60a; }
+        .nav-icon { font-size: 20px; }
+
+        .stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid rgba(255,214,10,0.12); }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; }
+        .stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 16px; color: #f5f7fa; }
+
+        .empty { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
+        .hint { margin-top: 20px; padding: 12px; background: rgba(0,224,255,0.05); border: 1px solid rgba(0,224,255,0.2); border-radius: 8px; font-size: 11px; color: #94a3b8; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; text-align: center; }
+        .loading { text-align: center; padding: 20px; color: #94a3b8; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+// ⚠️ REMPLACE CET URL PAR TON APPS SCRIPT DEPLOYMENT URL
+// Après avoir déployé ton Apps Script, tu auras une URL qui ressemble à :
+// https://script.google.com/macros/d/[ID]/usw
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYjmzfRFZL6UXZcmnDxty91Zfj6JgvQpjjXlRTV-61DJEGTH2pux3CtnWnDajX56r7/exec';
+
+// ============ DATA ============
+const GRAND_PRIX_QUESTIONS = [
+  { id: "gp01", theme: "Alcool", vital: true, question: "Quel est le taux d'alcoolémie maximal autorisé pour un conducteur en permis probatoire ?", options: ["0,2 g/L", "0,5 g/L", "0,8 g/L", "0 g/L strict"], answer: 0, explanation: "Depuis 2015, le seuil est de 0,2 g/L pour les jeunes permis, soit l'équivalent de zéro verre." },
+  { id: "gp02", theme: "Distracteurs", vital: true, question: "Tenir son téléphone en main à un feu rouge est-il autorisé ?", options: ["Oui, le véhicule est à l'arrêt", "Non, c'est interdit", "Oui si le moteur est coupé", "Uniquement avec kit mains-libres"], answer: 1, explanation: "Le Code de la route sanctionne l'usage du téléphone tenu en main dès que le moteur tourne, même à l'arrêt." },
+  { id: "gp03", theme: "Distance", vital: false, question: "Sur autoroute à 130 km/h, quelle est la règle pour la distance entre véhicules ?", options: ["50 mètres minimum", "Règle des 2 secondes", "100 mètres fixes", "1 longueur de voiture"], answer: 1, explanation: "La règle des 2 secondes donne environ 73 m à 130 km/h, et s'adapte à la vitesse." },
+  { id: "gp04", theme: "Fatigue", vital: false, question: "Au bout de combien de temps de conduite continue est-il recommandé de faire une pause ?", options: ["4 heures", "3 heures", "2 heures", "1 heure"], answer: 2, explanation: "La Sécurité Routière recommande une pause de 15 minutes toutes les 2 heures." },
+  { id: "gp05", theme: "Ceinture", vital: true, question: "Le port de la ceinture à l'arrière est-il obligatoire ?", options: ["Oui pour tous", "Seulement pour les enfants", "Recommandé mais non obligatoire", "Seulement sur autoroute"], answer: 0, explanation: "Obligatoire depuis 1990 à l'arrière. Le non-port est sanctionné de 135 € d'amende." },
+  { id: "gp06", theme: "Mobilité douce", vital: false, question: "À quelle vitesse maximale est bridée une trottinette électrique en ville ?", options: ["20 km/h", "25 km/h", "30 km/h", "45 km/h"], answer: 1, explanation: "Bridage légal à 25 km/h. Au-delà, l'engin est requalifié en cyclomoteur." },
+  { id: "gp07", theme: "Code", vital: false, question: "Que signifie un panneau triangulaire à bord rouge avec un point d'exclamation ?", options: ["Stop obligatoire", "Danger non spécifié", "Travaux", "Cédez-le-passage"], answer: 1, explanation: "Panneau « autre danger », appelle à une vigilance accrue sans préciser la nature du risque." },
+  { id: "gp08", theme: "Drogues", vital: true, question: "La consommation de cannabis multiplie le risque d'accident mortel par environ :", options: ["1,5", "1,8", "5", "Aucun effet prouvé"], answer: 1, explanation: "Étude SAM (2005) : facteur 1,8, et facteur 14 en combinaison avec l'alcool." },
+  { id: "gp09", theme: "Vélo", vital: false, question: "Le casque est-il obligatoire à vélo pour un adulte en ville ?", options: ["Oui", "Non, seulement recommandé", "Oui après 25 km/h", "Oui uniquement hors agglomération"], answer: 1, explanation: "Obligatoire uniquement pour les moins de 12 ans. Fortement recommandé pour tous." },
+  { id: "gp10", theme: "Distracteurs", vital: true, question: "Lire un SMS au volant détourne le regard de la route en moyenne pendant :", options: ["1 seconde", "5 secondes", "10 secondes", "Moins d'1 seconde"], answer: 1, explanation: "5 secondes, soit 70 mètres parcourus à l'aveugle à 50 km/h." },
+  { id: "gp11", theme: "Fatigue", vital: false, question: "Combien de temps d'éveil dégrade autant la vigilance que 0,5 g/L d'alcool ?", options: ["12 heures", "17 heures", "24 heures", "8 heures"], answer: 1, explanation: "Étude INRS : 17 heures d'éveil équivalent en termes de vigilance à 0,5 g/L d'alcoolémie." },
+  { id: "gp12", theme: "Code", vital: false, question: "Sur un rond-point classique en France, qui a la priorité ?", options: ["Celui qui entre", "Celui qui est déjà engagé", "Celui qui vient de droite", "Le plus rapide"], answer: 1, explanation: "Carrefour à sens giratoire : priorité à celui qui circule déjà sur l'anneau." },
+  { id: "gp13", theme: "Distance", vital: false, question: "En cas de pluie, la distance de freinage est multipliée par :", options: ["1,2", "1,5", "2", "3"], answer: 2, explanation: "Adhérence dégradée : la distance de freinage est doublée par rapport au sol sec." },
+  { id: "gp14", theme: "Mobilité douce", vital: false, question: "Un trottinettiste peut-il rouler sur le trottoir ?", options: ["Oui à allure modérée", "Non, c'est interdit", "Oui si pas de piste cyclable", "Oui à pied seulement"], answer: 1, explanation: "Interdit depuis 2019, sauf trottinette tenue à la main (mode piéton autorisé)." },
+  { id: "gp15", theme: "Piétons", vital: true, question: "Un piéton s'engage sur un passage protégé. Vous devez :", options: ["Klaxonner", "Ralentir si possible", "Vous arrêter obligatoirement", "Passer si vous êtes plus rapide"], answer: 2, explanation: "Article R415-11. Refus de priorité piéton = 4 points retirés et 135 € d'amende." },
+  { id: "gp16", theme: "Code", vital: false, question: "À quelle distance d'un passage piéton est-il interdit de stationner ?", options: ["3 mètres", "5 mètres en amont", "10 mètres", "Aucune restriction"], answer: 1, explanation: "Depuis 2015, 5 mètres en amont sont obligatoirement libres pour la visibilité des piétons." },
+  { id: "gp17", theme: "Alcool", vital: false, question: "Un verre d'alcool standard fait monter l'alcoolémie d'environ :", options: ["0,1 g/L", "0,25 g/L", "0,5 g/L", "Cela dépend uniquement du poids"], answer: 1, explanation: "Règle générale : 1 verre = 0,25 g/L. Variable selon corpulence, sexe et repas." },
+  { id: "gp18", theme: "Distracteurs", vital: false, question: "Le kit Bluetooth est-il totalement sûr pour téléphoner en conduisant ?", options: ["Oui, légal et sûr", "Légal mais reste distrayant", "Illégal", "Sûr si conversation < 1 min"], answer: 1, explanation: "Légal en France, mais la charge cognitive est comparable au téléphone tenu en main." },
+  { id: "gp19", theme: "Vélo", vital: false, question: "Un cycliste peut-il franchir un feu rouge avec un panonceau tourne-à-droite cycliste ?", options: ["Non jamais", "Oui, en cédant le passage", "Oui sans condition", "Seulement la nuit"], answer: 1, explanation: "Décret de 2012 : autorisé, à condition de céder le passage aux piétons et véhicules prioritaires." },
+  { id: "gp20", theme: "Code", vital: false, question: "Que signifie un marquage au sol en zigzag jaune ?", options: ["Zone de travaux", "Arrêt de bus", "Stationnement livraison", "Voie réservée taxis"], answer: 1, explanation: "Zone d'arrêt de bus : arrêt strictement interdit, même momentané." }
+];
+
+const DAILY_QUESTIONS = {
+  1: { theme: "Alcool & Drogues", questions: [
+    { id: "ct101", question: "Combien de temps faut-il en moyenne au foie pour éliminer 1 verre d'alcool ?", options: ["1 heure", "30 minutes", "2 heures", "4 heures"], answer: 0, explanation: "Le foie élimine environ 0,1 à 0,15 g/L par heure, soit 1 verre standard." },
+    { id: "ct102", question: "Un médicament avec pictogramme triangle rouge niveau 3 signifie :", options: ["Ne pas conduire", "Prudence requise", "Sans effet sur la conduite", "Réservé hôpital"], answer: 0, explanation: "Niveau 3 (rouge) = conduite formellement déconseillée ; demander l'avis d'un médecin." },
+    { id: "ct103", question: "Le cannabis détecté lors d'un contrôle routier entraîne :", options: ["Un simple avertissement", "Une amende uniquement", "Retrait de permis, amende et prison possible", "Rien si moins d'1 g"], answer: 2, explanation: "Délit : 4 500 € d'amende, jusqu'à 2 ans de prison, retrait de 6 points et suspension du permis." }
+  ]},
+  2: { theme: "Fatigue & Vigilance", questions: [
+    { id: "ct201", question: "Le micro-sommeil au volant dure en moyenne :", options: ["1 à 4 secondes", "30 secondes", "10 minutes", "1 minute"], answer: 0, explanation: "1 à 4 secondes. À 130 km/h, c'est jusqu'à 145 mètres parcourus sans aucun contrôle." },
+    { id: "ct202", question: "Quel créneau horaire est le plus accidentogène en raison de la fatigue ?", options: ["2h - 5h du matin", "22h - minuit", "12h - 14h", "18h - 20h"], answer: 0, explanation: "Le creux nocturne de vigilance entre 2h et 5h, doublé d'un second creux entre 13h et 15h." },
+    { id: "ct203", question: "Bâillements répétés, paupières lourdes : la bonne réaction est :", options: ["Ouvrir la fenêtre", "Boire un café et continuer", "S'arrêter 15 à 20 minutes", "Monter le volume de la radio"], answer: 2, explanation: "Seule une vraie pause restaure la vigilance. Café et fenêtre ouverte ne sont que des leurres." }
+  ]},
+  3: { theme: "Distracteurs & Smartphone", questions: [
+    { id: "ct301", question: "Utiliser une oreillette pour téléphoner au volant est :", options: ["Autorisé", "Interdit depuis 2015", "Toléré en ville", "Autorisé en mains-libres"], answer: 1, explanation: "Depuis juillet 2015, tout dispositif intra-auriculaire est interdit en conduisant (135 € + 3 points)." },
+    { id: "ct302", question: "Manipuler son GPS à écran tactile pendant la conduite :", options: ["Est autorisé", "Est toléré au feu rouge", "Est interdit, même à l'arrêt moteur tournant", "Est autorisé sur autoroute"], answer: 2, explanation: "Toute manipulation manuelle d'un appareil tenu en main est interdite moteur tournant." },
+    { id: "ct303", question: "Régler la radio intégrée du véhicule au volant, c'est :", options: ["Légalement autorisé", "Interdit comme le téléphone", "Toléré uniquement à l'arrêt", "Verbalisé comme distraction"], answer: 0, explanation: "Légal car équipement intégré au véhicule, mais à utiliser avec prudence (charge cognitive)." }
+  ]},
+  4: { theme: "Mobilités douces", questions: [
+    { id: "ct401", question: "À vélo, la nuit hors agglomération, le gilet rétroréfléchissant est :", options: ["Recommandé", "Obligatoire", "Interdit", "Réservé aux pros"], answer: 1, explanation: "Obligatoire pour cycliste et passager, de nuit ou par visibilité réduite, hors agglomération." },
+    { id: "ct402", question: "Une trottinette électrique peut transporter :", options: ["1 personne", "2 adultes", "1 adulte + 1 enfant", "Autant que de place disponible"], answer: 0, explanation: "Conduite strictement solo. Tout transport de passager est interdit (135 € d'amende)." },
+    { id: "ct403", question: "Sur une piste cyclable bidirectionnelle, le cycliste doit :", options: ["Rouler au milieu", "Tenir sa droite", "Rouler à gauche", "Choisir librement"], answer: 1, explanation: "Comme sur la chaussée : tenir la droite pour permettre le croisement avec les autres usagers." }
+  ]},
+  5: { theme: "Distances & Code", questions: [
+    { id: "ct501", question: "À 50 km/h sur sol sec, la distance d'arrêt (réaction + freinage) est d'environ :", options: ["14 mètres", "28 mètres", "50 mètres", "8 mètres"], answer: 1, explanation: "≈ 14 m de réaction + 14 m de freinage = 28 m. Sur sol mouillé : ≈ 42 m." },
+    { id: "ct502", question: "En cas de panne sur autoroute, vous devez :", options: ["Rester dans le véhicule", "Sortir côté gauche", "Sortir côté droit avec gilet et poser le triangle", "Pousser la voiture sur la voie"], answer: 2, explanation: "Sortir côté opposé à la circulation, gilet enfilé AVANT de sortir, et se réfugier derrière la glissière." },
+    { id: "ct503", question: "Une ligne blanche continue peut-elle être franchie pour dépasser un cycliste lent ?", options: ["Non jamais", "Oui toujours", "Oui si visibilité suffisante", "Seulement de jour"], answer: 2, explanation: "Depuis 2015, dépassement d'un cycliste avec franchissement de ligne continue autorisé si la visibilité le permet (1 m en ville, 1,50 m hors agglomération)." }
+  ]}
+};
+
+// ============ LOGIQUE ============
+const TIME_LIMIT_MS = 15000;
+
+const scoreGP = ({correct, vital, timeMs, answered}) => {
+  if (!answered) return {points: 0, reason: 'timeout'};
+  if (!correct) return vital ? {points: -50, reason: 'malus'} : {points: 0, reason: 'wrong'};
+  const bonus = timeMs < 5000 ? 50 : timeMs < 10000 ? 25 : 0;
+  return {points: 100 + bonus, reason: bonus > 0 ? 'fast' : 'correct', bonus};
+};
+
+const scoreDaily = ({correct, answered}) => (!answered || !correct) ? {points: 0} : {points: 75};
+
+const getStatus = (t) => {
+  if (t >= 3500) return {label: 'Champion SafeDrive', emoji: '🏆'};
+  if (t >= 2201) return {label: 'As du Volant', emoji: '⭐'};
+  if (t >= 1201) return {label: 'Conducteur Émérite', emoji: '🎯'};
+  if (t >= 501) return {label: 'Pilote Averti', emoji: '🚗'};
+  return {label: 'Apprenti Conducteur', emoji: '🔰'};
+};
+
+const userTotal = (u) => {
+  if (!u) return 0;
+  const daily = Object.values(u.dailyChallenges || {}).reduce((s, x) => s + x.score, 0);
+  return (u.grandPrixScore || 0) + daily + (u.finalBonusGranted ? 200 : 0);
+};
+
+const shuffle = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+// ============ GOOGLE SHEETS ============
+async function saveScoreToSheets(firstName, service, mode, score, day, perfect) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('REMPLACER')) {
+    console.warn('Apps Script URL non configurée');
+    return;
+  }
+  
+  try {
+    const payload = {
+      firstName,
+      service,
+      mode,
+      score,
+      day: day || '',
+      perfect: perfect || false
+    };
+    
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      mode: 'no-cors'
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'enregistrement du score:', error);
+  }
+}
+
+async function loadLeaderboardFromSheets() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('REMPLACER')) {
+    return null;
+  }
+  
+  try {
+    const response = await fetch(APPS_SCRIPT_URL);
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) return null;
+    
+    // Agrège les scores par utilisateur
+    const users = {};
+    data.forEach(row => {
+      const key = `${row.firstName}_${row.service}`;
+      if (!users[key]) {
+        users[key] = {
+          firstName: row.firstName,
+          service: row.service,
+          grandPrixScore: 0,
+          grandPrixDone: false,
+          dailyChallenges: {},
+          finalBonusGranted: false,
+          total: 0
+        };
+      }
+      
+      if (row.mode === 'gp') {
+        users[key].grandPrixScore = row.score;
+        users[key].grandPrixDone = true;
+      } else if (row.mode === 'daily') {
+        users[key].dailyChallenges[row.day] = {score: row.score, perfect: row.perfect};
+        const daysDone = Object.keys(users[key].dailyChallenges).length;
+        if (daysDone >= 5) users[key].finalBonusGranted = true;
+      }
+      
+      users[key].total = userTotal(users[key]);
+    });
+    
+    return Object.values(users);
+  } catch (error) {
+    console.error('Erreur lors du chargement du leaderboard:', error);
+    return null;
+  }
+}
+
+// ============ ÉTAT GLOBAL ============
+let state = {
+  users: [],
+  sheetsLeaderboard: null,
+  currentUserId: null,
+  view: 'login',
+  quizConfig: null,
+  lastResult: null,
+  loadingLeaderboard: false
+};
+
+// ============ RENDER ============
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  
+  const currentUser = state.users.find(u => u.id === state.currentUserId);
+
+  if (!currentUser) {
+    renderLogin(app);
+  } else {
+    if (state.view === 'dashboard') renderDashboard(app, currentUser);
+    else if (state.view === 'quiz') renderQuiz(app, currentUser);
+    else if (state.view === 'result') renderResult(app);
+    else if (state.view === 'leaderboard') renderLeaderboard(app, currentUser);
+  }
+}
+
+function renderLogin(app) {
+  app.innerHTML = `
+    <div class="login-wrap">
+      <div class="brand" style="margin-bottom: 28px;">
+        <span class="brand-dot"></span>SAFEDRIVE / CHALLENGE
+      </div>
+      <h1 class="login-title">
+        Prenez le volant.
+        <span class="accent">Battez le score.</span>
+      </h1>
+      <p class="login-subtitle">
+        Semaine de la Sécurité Routière. 20 questions, 5 jours de défis, un seul gagnant par équipe.
+      </p>
+      <form id="loginForm">
+        <div class="field">
+          <label>Prénom</label>
+          <input type="text" id="firstName" placeholder="Jérôme" maxlength="30" required>
+        </div>
+        <div class="field">
+          <label>Service / Équipe</label>
+          <input type="text" id="service" placeholder="ex. QSE, Logistique, RH…" maxlength="40" required>
+        </div>
+        <div id="error" class="error-msg" style="display:none;"></div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Démarrer le moteur →</button>
+      </form>
+      <p style="margin-top: 24px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #4b5874; text-align: center; letter-spacing: 0.1em; text-transform: uppercase;">
+        Données enregistrées en Google Sheets
+      </p>
+    </div>
+  `;
+  
+  document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fn = document.getElementById('firstName').value.trim();
+    const srv = document.getElementById('service').value.trim();
+    
+    if (!fn || !srv) {
+      document.getElementById('error').textContent = 'Renseigne ton prénom et ton service.';
+      document.getElementById('error').style.display = 'block';
+      return;
+    }
+    
+    const id = `${fn.toLowerCase()}_${srv.toLowerCase()}`.replace(/\s+/g, '-');
+    let user = state.users.find(u => u.id === id);
+    
+    if (!user) {
+      user = {
+        id, firstName: fn, service: srv,
+        grandPrixDone: false, grandPrixScore: 0,
+        dailyChallenges: {}, finalBonusGranted: false,
+        simulatedDay: 1, lastDayPlayed: 0
+      };
+      state.users.push(user);
+    }
+    
+    state.currentUserId = id;
+    state.view = 'dashboard';
+    render();
+  });
+}
+
+function renderDashboard(app, currentUser) {
+  const total = userTotal(currentUser);
+  const status = getStatus(total);
+  const daysDone = Object.keys(currentUser.dailyChallenges).length;
+  const nextDay = Math.min(daysDone + 1, 5);
+  
+  app.innerHTML = `
+    <div style="animation: fadeIn 0.4s ease;">
+      <header class="dash-header">
+        <div class="brand">
+          <span class="brand-dot"></span>SAFEDRIVE
+        </div>
+        <button class="user-pill" onclick="logout();">${currentUser.firstName} · ${currentUser.service} ↗</button>
+      </header>
+
+      <div class="panel">
+        <div class="score-display">
+          <div class="score-label">SCORE TOTAL</div>
+          <div class="score-value">${total.toLocaleString('fr-FR')}</div>
+          <div class="score-unit">POINTS</div>
+          <div class="status-tag">${status.emoji} ${status.label}</div>
+        </div>
+
+        <div class="week-progress">
+          ${[1,2,3,4,5].map(d => {
+            const done = d <= daysDone;
+            const cur = d === daysDone + 1;
+            return `<div class="week-cell ${done ? 'done' : ''} ${cur ? 'today' : ''}"></div>`;
+          }).join('')}
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: #94a3b8; text-transform: uppercase; margin-top: 8px; text-align: center;">
+          PROGRESSION SEMAINE · ${daysDone}/5 JOURS
+        </div>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <div class="panel-title">CHOISIR UN DÉFI</div>
+
+        <button class="mode-card" onclick="launchGP();" ${currentUser.grandPrixDone ? 'disabled' : ''}>
+          <div class="mode-card-header">
+            <div>
+              <div class="mode-tag">PARTIE UNIQUE</div>
+              <div class="mode-title">🏁 Grand Prix</div>
+            </div>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: ${currentUser.grandPrixDone ? '#00d68f' : '#ffd60a'}; letter-spacing: 0.1em;">
+              ${currentUser.grandPrixDone ? '✓ TERMINÉ' : '▶ JOUER'}
+            </span>
+          </div>
+          <div class="mode-desc">
+            20 questions chrono. 15 secondes pour répondre. Bonus de rapidité et malus accident sur les fautes vitales.
+          </div>
+          <div class="mode-meta">
+            <div class="mode-meta-item">MAX <strong>3 000 pts</strong></div>
+            <div class="mode-meta-item">SCORE <strong>${currentUser.grandPrixDone ? currentUser.grandPrixScore.toLocaleString('fr-FR') : '—'}</strong></div>
+          </div>
+        </button>
+
+        <button class="mode-card" onclick="launchDaily();" ${daysDone >= 5 ? 'disabled' : ''}>
+          <div class="mode-card-header">
+            <div>
+              <div class="mode-tag">BONUS QUOTIDIEN · JOUR ${nextDay}</div>
+              <div class="mode-title">🔧 Contrôle Technique</div>
+            </div>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #ffd60a; letter-spacing: 0.1em;">
+              ${daysDone >= 5 ? '✓ COMPLET' : '▶ DÉFI'}
+            </span>
+          </div>
+          <div class="mode-desc">
+            3 questions par jour. Sans-faute = +50 pts. 5 jours complétés = bonus final de +200 pts.
+          </div>
+          <div class="mode-meta">
+            <div class="mode-meta-item">MAX <strong>275 pts/j</strong></div>
+            <div class="mode-meta-item">ASSIDUITÉ <strong>${daysDone}/5</strong></div>
+          </div>
+        </button>
+      </div>
+
+      ${currentUser.finalBonusGranted ? `
+        <div class="panel" style="border-color: #ffd60a; margin-top: 16px;">
+          <div class="panel-title" style="color: #ffd60a;">🏆 BONUS ASSIDUITÉ DÉBLOQUÉ</div>
+          <p style="font-size: 13px; color: #94a3b8;">5 jours complétés. +200 points ajoutés à ton score total.</p>
+        </div>
+      ` : ''}
+
+      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <button onclick="state.view='leaderboard'; loadAndRenderLeaderboard();" class="btn btn-ghost">📊 Voir le classement</button>
+      </div>
+
+      <div class="hint">💡 Les scores sont enregistrés automatiquement dans le classement</div>
+    </div>
+  `;
+}
+
+function renderQuiz(app, currentUser) {
+  if (!state.quizConfig) return;
+  
+  const {mode, questions, day} = state.quizConfig;
+  const questionIndex = state.quizConfig.currentQuestion || 0;
+  const q = questions[questionIndex];
+  const isLast = questionIndex === questions.length - 1;
+  const results = state.quizConfig.results || [];
+  const lastResult = results[results.length - 1];
+  
+  // Affiche le feedback SEULEMENT si la question actuelle a une réponse
+  const showFeedback = lastResult && state.quizConfig.answered;
+  
+  app.innerHTML = `
+    <div style="padding-top: 20px; animation: fadeIn 0.4s ease;">
+      <div class="quiz-header">
+        <button onclick="abortQuiz();" style="color: #94a3b8; background: none; border: none; cursor: pointer; font-family: inherit; font-size: 12px;">← Quitter</button>
+        <span>Q${questionIndex + 1} / ${questions.length} · ${mode === 'gp' ? 'GRAND PRIX' : 'CONTRÔLE'}</span>
+      </div>
+
+      <div class="quiz-progress">
+        <div class="quiz-progress-fill" style="width: ${((questionIndex + (showFeedback ? 1 : 0)) / questions.length) * 100}%"></div>
+      </div>
+
+      <div class="timer-ring" id="timerRing">
+        <svg width="80" height="80">
+          <circle class="bg-circle" cx="40" cy="40" r="36"/>
+          <circle class="progress-circle" cx="40" cy="40" r="36" stroke-dasharray="226.19" stroke-dashoffset="0" id="progressCircle"/>
+        </svg>
+        <div class="timer-label" id="timerLabel">15</div>
+      </div>
+
+      <div style="text-align: center;">
+        <span class="theme-tag">${q.theme || 'CONTRÔLE TECHNIQUE'}</span>
+        ${q.vital ? '<span class="vital-tag">VITAL</span>' : ''}
+      </div>
+
+      <div class="question-text">${q.question}</div>
+
+      <div class="option-list">
+        ${q.options.map((opt, i) => {
+          let cls = 'option';
+          if (showFeedback) {
+            if (i === q.answer) cls += ' correct';
+            else if (i === state.quizConfig.selectedOption) cls += ' wrong';
+          }
+          return `<button class="${cls}" onclick="selectOption(${i});" ${showFeedback ? 'disabled' : ''}>${String.fromCharCode(65 + i)}. ${opt}</button>`;
+        }).join('')}
+      </div>
+
+      ${showFeedback ? `
+        <div class="feedback ${lastResult.correct ? 'success' : 'error'}">
+          <div class="feedback-title">
+            ${lastResult.correct ? `✓ BONNE RÉPONSE${lastResult.reason === 'fast' ? ' · RAPIDE !' : ''}` : lastResult.reason === 'malus' ? '✕ MALUS ACCIDENT' : lastResult.reason === 'timeout' ? '⏱ TEMPS ÉCOULÉ' : '✕ MAUVAISE RÉPONSE'}
+            <span class="feedback-points">${lastResult.points > 0 ? '+' : ''}${lastResult.points} pts</span>
+          </div>
+          <div class="feedback-text">${q.explanation}</div>
+        </div>
+        <button onclick="nextQuestion();" class="btn btn-primary" style="margin-top: 16px;">
+          ${isLast ? 'Voir mon résultat →' : 'Question suivante →'}
+        </button>
+      ` : ''}
+    </div>
+  `;
+  
+  if (!state.quizConfig.timerStarted) {
+    state.quizConfig.timerStarted = true;
+    state.quizConfig.startTime = Date.now();
+    startTimer();
+  }
+}
+
+function startTimer() {
+  if (state.quizConfig.timerInterval) clearInterval(state.quizConfig.timerInterval);
+  
+  state.quizConfig.timerInterval = setInterval(() => {
+    const elapsed = Date.now() - state.quizConfig.startTime;
+    const remaining = Math.max(0, TIME_LIMIT_MS - elapsed);
+    const seconds = Math.ceil(remaining / 1000);
+    
+    const label = document.getElementById('timerLabel');
+    const circle = document.getElementById('progressCircle');
+    const ring = document.getElementById('timerRing');
+    
+    if (label) label.textContent = seconds;
+    if (circle) {
+      const circ = 2 * Math.PI * 36;
+      const offset = circ * (1 - remaining / TIME_LIMIT_MS);
+      circle.setAttribute('stroke-dashoffset', offset);
+    }
+    if (ring && remaining < 5000) ring.classList.add('urgent');
+    
+    if (remaining === 0) {
+      clearInterval(state.quizConfig.timerInterval);
+      if (!state.quizConfig.answered) {
+        state.quizConfig.answered = true;
+        state.quizConfig.selectedOption = -1;
+        render();
+      }
+    }
+  }, 100);
+}
+
+function selectOption(optionIndex, timeout = false) {
+  if (state.quizConfig.answered) return;
+  state.quizConfig.answered = true;
+  
+  // Arrête le timer
+  if (state.quizConfig.timerInterval) {
+    clearInterval(state.quizConfig.timerInterval);
+  }
+  
+  const {mode, questions} = state.quizConfig;
+  const questionIndex = state.quizConfig.currentQuestion || 0;
+  const q = questions[questionIndex];
+  const timeMs = Date.now() - state.quizConfig.startTime;
+  
+  const correct = !timeout && optionIndex === q.answer;
+  const answered = !timeout;
+  
+  const scoreResult = mode === 'gp'
+    ? scoreGP({correct, vital: q.vital, timeMs, answered})
+    : scoreDaily({correct, answered});
+  
+  const result = {id: q.id, correct, answered, vital: q.vital || false, timeMs, ...scoreResult};
+  
+  if (!state.quizConfig.results) state.quizConfig.results = [];
+  state.quizConfig.results.push(result);
+  state.quizConfig.selectedOption = timeout ? -1 : optionIndex;
+  
+  render();
+}
+
+function nextQuestion() {
+  const questionIndex = state.quizConfig.currentQuestion || 0;
+  const isLast = questionIndex === state.quizConfig.questions.length - 1;
+  
+  if (isLast) {
+    finishQuiz();
+  } else {
+    // Arrête le timer avant de passer à la question suivante
+    if (state.quizConfig.timerInterval) {
+      clearInterval(state.quizConfig.timerInterval);
+      state.quizConfig.timerInterval = null;
+    }
+    
+    state.quizConfig.currentQuestion = questionIndex + 1;
+    state.quizConfig.answered = false;
+    state.quizConfig.selectedOption = null;
+    state.quizConfig.timerStarted = false;
+    state.quizConfig.startTime = Date.now();
+    render();
+  }
+}
+
+async function finishQuiz() {
+  const {mode, day, results} = state.quizConfig;
+  const currentUser = state.users.find(u => u.id === state.currentUserId);
+  
+  if (mode === 'gp') {
+    const total = results.reduce((s, x) => s + x.points, 0);
+    currentUser.grandPrixDone = true;
+    currentUser.grandPrixScore = total;
+    state.lastResult = {mode: 'gp', total, perQuestion: results};
+    
+    // Enregistre dans Google Sheets
+    await saveScoreToSheets(currentUser.firstName, currentUser.service, 'gp', total);
+  } else {
+    const sum = results.reduce((s, x) => s + x.points, 0);
+    const perfect = results.length === 3 && results.every(x => x.points > 0);
+    const score = sum + (perfect ? 50 : 0);
+    currentUser.dailyChallenges[day] = {score, perfect, streakBonus: perfect ? 50 : 0};
+    const daysDone = Object.keys(currentUser.dailyChallenges).length;
+    if (daysDone >= 5) currentUser.finalBonusGranted = true;
+    state.lastResult = {mode: 'daily', score, perfect, streakBonus: perfect ? 50 : 0, perQuestion: results};
+    
+    // Enregistre dans Google Sheets
+    await saveScoreToSheets(currentUser.firstName, currentUser.service, 'daily', score, day, perfect);
+  }
+  
+  state.view = 'result';
+  state.quizConfig = null;
+  render();
+}
+
+function abortQuiz() {
+  if (confirm('Quitter la partie ? Ta progression sera perdue.')) {
+    state.view = 'dashboard';
+    state.quizConfig = null;
+    render();
+  }
+}
+
+function launchGP() {
+  const questions = shuffle(GRAND_PRIX_QUESTIONS).slice(0, 20);
+  state.quizConfig = {
+    mode: 'gp',
+    questions,
+    currentQuestion: 0,
+    answered: false,
+    selectedOption: null,
+    results: [],
+    timerStarted: false,
+    timerInterval: null,
+    startTime: Date.now()
+  };
+  state.view = 'quiz';
+  render();
+}
+
+function launchDaily() {
+  const currentUser = state.users.find(u => u.id === state.currentUserId);
+  const daysDone = Object.keys(currentUser.dailyChallenges).length;
+  const day = Math.min(daysDone + 1, 5);
+  const questions = DAILY_QUESTIONS[day].questions;
+  
+  state.quizConfig = {
+    mode: 'daily',
+    day,
+    questions,
+    currentQuestion: 0,
+    answered: false,
+    selectedOption: null,
+    results: [],
+    timerStarted: false,
+    timerInterval: null,
+    startTime: Date.now()
+  };
+  state.view = 'quiz';
+  render();
+}
+
+function renderResult(app) {
+  const {mode, ...result} = state.lastResult;
+  const score = mode === 'gp' ? result.total : result.score;
+  const status = mode === 'gp' ? getStatus(score) : null;
+  
+  const stats = mode === 'gp' ? {
+    correct: result.perQuestion.filter(r => r.correct).length,
+    fast: result.perQuestion.filter(r => r.reason === 'fast').length,
+    malus: result.perQuestion.filter(r => r.reason === 'malus').length,
+    timeout: result.perQuestion.filter(r => r.reason === 'timeout').length
+  } : {
+    correct: result.perQuestion.filter(r => r.correct).length
+  };
+
+  app.innerHTML = `
+    <div style="padding-top: 40px; animation: fadeIn 0.4s ease;">
+      <div class="panel" style="text-align: center; padding: 32px 20px;">
+        <div class="score-label">${mode === 'gp' ? 'RÉSULTAT GRAND PRIX' : 'CONTRÔLE TECHNIQUE TERMINÉ'}</div>
+        <div class="score-value" style="margin-top: 12px;">${score > 0 ? '+' : ''}${score.toLocaleString('fr-FR')}</div>
+        <div class="score-unit">POINTS GAGNÉS</div>
+        ${status ? `<div class="status-tag" style="margin-top: 20px;">${status.emoji} STATUT : ${status.label}</div>` : ''}
+        ${mode === 'daily' && result.perfect ? `<div class="status-tag" style="margin-top: 12px; background: rgba(0,214,143,0.1); border-color: #00d68f; color: #00d68f;">★ SANS-FAUTE · +50 PTS BONUS</div>` : ''}
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">DÉTAIL</div>
+        <div class="stat-row">
+          <span class="stat-label">Bonnes réponses</span>
+          <span class="stat-value">${stats.correct} / ${result.perQuestion.length}</span>
+        </div>
+        ${mode === 'gp' ? `
+          <div class="stat-row">
+            <span class="stat-label">Réponses rapides (&lt;5s)</span>
+            <span class="stat-value">${stats.fast}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Malus accident</span>
+            <span class="stat-value" style="color: ${stats.malus > 0 ? '#ff4d6d' : '#f5f7fa'}">${stats.malus}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Temps écoulé</span>
+            <span class="stat-value">${stats.timeout}</span>
+          </div>
+        ` : ''}
+      </div>
+
+      <button onclick="state.view='dashboard'; state.lastResult=null; render();" class="btn btn-primary" style="margin-top: 20px;">Retour au dashboard →</button>
+    </div>
+  `;
+}
+
+async function loadAndRenderLeaderboard() {
+  state.loadingLeaderboard = true;
+  state.view = 'leaderboard';
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="loading">Chargement du classement...</div>';
+  
+  const sheetData = await loadLeaderboardFromSheets();
+  const currentUser = state.users.find(u => u.id === state.currentUserId);
+  
+  if (sheetData && sheetData.length > 0) {
+    state.sheetsLeaderboard = sheetData;
+  }
+  
+  renderLeaderboard(app, currentUser);
+}
+
+function renderLeaderboard(app, currentUser) {
+  const leaderboardData = state.sheetsLeaderboard || state.users;
+  const individual = leaderboardData
+    .map(u => ({...u, total: userTotal(u), daysDone: Object.keys(u.dailyChallenges).length}))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+
+  const byService = {};
+  leaderboardData.forEach(u => {
+    if (!byService[u.service]) byService[u.service] = [];
+    byService[u.service].push(userTotal(u));
+  });
+  const teams = Object.entries(byService)
+    .filter(([, s]) => s.length >= 2)
+    .map(([service, scores]) => ({
+      service,
+      average: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+      members: scores.length
+    }))
+    .sort((a, b) => b.average - a.average);
+
+  app.innerHTML = `
+    <div style="padding-top: 20px; animation: fadeIn 0.4s ease;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <button onclick="state.view='dashboard'; render();" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 14px; font-family: inherit;">←</button>
+        <h2 style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em;">Classement</h2>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchLeaderboardTab('individual');" id="tabIndividual">Individuel</button>
+        <button class="tab" onclick="switchLeaderboardTab('teams');" id="tabTeams">Équipes</button>
+      </div>
+
+      <div id="leaderboardContent">
+        ${individual.map((u, i) => {
+          const r = i + 1;
+          const podium = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `#${r}`;
+          const me = u.id === currentUser.id;
+          return `
+            <div class="leader-row ${r <= 3 ? `podium-${r}` : ''} ${me ? 'is-me' : ''}">
+              <div class="rank ${r <= 3 ? `podium-${r}` : ''}">${podium}</div>
+              <div class="leader-info">
+                <div class="leader-name">${u.firstName}${me ? ' (vous)' : ''}</div>
+                <div class="leader-meta">${u.service} · ${u.grandPrixDone ? 'GP ✓' : 'GP —'} · ${u.daysDone}/5 j</div>
+              </div>
+              <div class="leader-score">${u.total.toLocaleString('fr-FR')}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function switchLeaderboardTab(tab) {
+  const leaderboardData = state.sheetsLeaderboard || state.users;
+  const currentUser = state.users.find(u => u.id === state.currentUserId);
+  const content = document.getElementById('leaderboardContent');
+  
+  document.getElementById('tabIndividual').classList.toggle('active', tab === 'individual');
+  document.getElementById('tabTeams').classList.toggle('active', tab === 'teams');
+  
+  if (tab === 'individual') {
+    const individual = leaderboardData
+      .map(u => ({...u, total: userTotal(u), daysDone: Object.keys(u.dailyChallenges).length}))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
+    
+    content.innerHTML = individual.map((u, i) => {
+      const r = i + 1;
+      const podium = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `#${r}`;
+      const me = u.id === currentUser.id;
+      return `
+        <div class="leader-row ${r <= 3 ? `podium-${r}` : ''} ${me ? 'is-me' : ''}">
+          <div class="rank ${r <= 3 ? `podium-${r}` : ''}">${podium}</div>
+          <div class="leader-info">
+            <div class="leader-name">${u.firstName}${me ? ' (vous)' : ''}</div>
+            <div class="leader-meta">${u.service} · ${u.grandPrixDone ? 'GP ✓' : 'GP —'} · ${u.daysDone}/5 j</div>
+          </div>
+          <div class="leader-score">${u.total.toLocaleString('fr-FR')}</div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    const byService = {};
+    leaderboardData.forEach(u => {
+      if (!byService[u.service]) byService[u.service] = [];
+      byService[u.service].push(userTotal(u));
+    });
+    const teams = Object.entries(byService)
+      .filter(([, s]) => s.length >= 2)
+      .map(([service, scores]) => ({
+        service,
+        average: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+        members: scores.length
+      }))
+      .sort((a, b) => b.average - a.average);
+    
+    content.innerHTML = teams.length === 0
+      ? `<div class="empty">Il faut au moins 2 participants par service pour apparaître au classement équipes.</div>`
+      : teams.map((t, i) => {
+          const r = i + 1;
+          const podium = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `#${r}`;
+          return `
+            <div class="leader-row ${r <= 3 ? `podium-${r}` : ''}">
+              <div class="rank ${r <= 3 ? `podium-${r}` : ''}">${podium}</div>
+              <div class="leader-info">
+                <div class="leader-name">${t.service}</div>
+                <div class="leader-meta">${t.members} participants · moyenne</div>
+              </div>
+              <div class="leader-score">${t.average.toLocaleString('fr-FR')}</div>
+            </div>
+          `;
+        }).join('');
+  }
+}
+
+function logout() {
+  state.currentUserId = null;
+  state.view = 'login';
+  render();
+}
+
+// Lancer l'app
+render();
+    </script>
+</body>
+</html>
