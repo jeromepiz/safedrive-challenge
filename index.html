@@ -267,6 +267,30 @@ const shuffle = (arr) => {
 };
 
 // ============ GOOGLE SHEETS ============
+async function loadUserFromSheets(firstName, service) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('REMPLACER')) {
+    console.warn('Apps Script URL non configurée');
+    return null;
+  }
+  
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'getUser',
+        firstName,
+        service
+      }),
+      mode: 'no-cors'
+    });
+    const data = await response.json();
+    return data.user || null;
+  } catch (error) {
+    console.error('Erreur lors du chargement de l\'utilisateur:', error);
+    return null;
+  }
+}
+
 async function saveScoreToSheets(firstName, service, mode, score, day, perfect) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('REMPLACER')) {
     console.warn('Apps Script URL non configurée');
@@ -275,6 +299,7 @@ async function saveScoreToSheets(firstName, service, mode, score, day, perfect) 
   
   try {
     const payload = {
+      action: 'saveScore',
       firstName,
       service,
       mode,
@@ -393,12 +418,12 @@ function renderLogin(app) {
         <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Démarrer le moteur →</button>
       </form>
       <p style="margin-top: 24px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #4b5874; text-align: center; letter-spacing: 0.1em; text-transform: uppercase;">
-        Données enregistrées en Google Sheets
+        Données synchronisées en Google Sheets
       </p>
     </div>
   `;
   
-  document.getElementById('loginForm').addEventListener('submit', (e) => {
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fn = document.getElementById('firstName').value.trim();
     const srv = document.getElementById('service').value.trim();
@@ -410,15 +435,38 @@ function renderLogin(app) {
     }
     
     const id = `${fn.toLowerCase()}_${srv.toLowerCase()}`.replace(/\s+/g, '-');
+    
+    // Cherche d'abord dans localStorage (fallback)
     let user = state.users.find(u => u.id === id);
     
     if (!user) {
-      user = {
-        id, firstName: fn, service: srv,
-        grandPrixDone: false, grandPrixScore: 0,
-        dailyChallenges: {}, finalBonusGranted: false,
-        simulatedDay: 1, lastDayPlayed: 0
-      };
+      // Charge depuis Google Sheets
+      const sheetUser = await loadUserFromSheets(fn, srv);
+      
+      if (sheetUser) {
+        // Utilisateur trouvé dans Sheets
+        user = {
+          id,
+          firstName: fn,
+          service: srv,
+          grandPrixDone: sheetUser.grandPrixDone,
+          grandPrixScore: sheetUser.grandPrixScore,
+          dailyChallenges: sheetUser.dailyChallenges || {},
+          finalBonusGranted: sheetUser.finalBonusGranted
+        };
+      } else {
+        // Nouvel utilisateur
+        user = {
+          id,
+          firstName: fn,
+          service: srv,
+          grandPrixDone: false,
+          grandPrixScore: 0,
+          dailyChallenges: {},
+          finalBonusGranted: false
+        };
+      }
+      
       state.users.push(user);
     }
     
