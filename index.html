@@ -177,7 +177,7 @@
 // ⚠️ REMPLACE CET URL PAR TON APPS SCRIPT DEPLOYMENT URL
 // Après avoir déployé ton Apps Script, tu auras une URL qui ressemble à :
 // https://script.google.com/macros/d/[ID]/usw
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYjmzfRFZL6UXZcmnDxty91Zfj6JgvQpjjXlRTV-61DJEGTH2pux3CtnWnDajX56r7/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/library/d/1GPbHvdx1ciL1DM8liC_rgX01a92K2wx3CGCb8TBQtHNz0KrncA2APD66/3';
 
 // ============ DATA ============
 const GRAND_PRIX_QUESTIONS = [
@@ -456,7 +456,9 @@ function renderLogin(app) {
           grandPrixDone: sheetUser.grandPrixDone === true,
           grandPrixScore: Number(sheetUser.grandPrixScore) || 0,
           dailyChallenges: sheetUser.dailyChallenges || {},
-          finalBonusGranted: sheetUser.finalBonusGranted === true
+          finalBonusGranted: sheetUser.finalBonusGranted === true,
+          lastDailyDate: sheetUser.lastDailyDate || '',
+          dailyDoneToday: sheetUser.dailyDoneToday === true
         };
       } else {
         // Nouvel utilisateur
@@ -467,7 +469,9 @@ function renderLogin(app) {
           grandPrixDone: false,
           grandPrixScore: 0,
           dailyChallenges: {},
-          finalBonusGranted: false
+          finalBonusGranted: false,
+          lastDailyDate: '',
+          dailyDoneToday: false
         };
       }
       
@@ -485,6 +489,7 @@ function renderDashboard(app, currentUser) {
   const status = getStatus(total);
   const daysDone = Object.keys(currentUser.dailyChallenges).length;
   const nextDay = Math.min(daysDone + 1, 5);
+  const dailyBlocked = currentUser.dailyDoneToday || daysDone >= 5;
   
   app.innerHTML = `
     <div style="animation: fadeIn 0.4s ease;">
@@ -537,18 +542,20 @@ function renderDashboard(app, currentUser) {
           </div>
         </button>
 
-        <button class="mode-card" onclick="launchDaily();" ${daysDone >= 5 ? 'disabled' : ''}>
+        <button class="mode-card" onclick="launchDaily();" ${dailyBlocked ? 'disabled' : ''}>
           <div class="mode-card-header">
             <div>
               <div class="mode-tag">BONUS QUOTIDIEN · JOUR ${nextDay}</div>
               <div class="mode-title">🔧 Contrôle Technique</div>
             </div>
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #ffd60a; letter-spacing: 0.1em;">
-              ${daysDone >= 5 ? '✓ COMPLET' : '▶ DÉFI'}
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: ${dailyBlocked ? '#00d68f' : '#ffd60a'}; letter-spacing: 0.1em;">
+              ${daysDone >= 5 ? '✓ COMPLET' : currentUser.dailyDoneToday ? '✓ FAIT AUJOURD\\'HUI' : '▶ DÉFI'}
             </span>
           </div>
           <div class="mode-desc">
-            3 questions par jour. Sans-faute = +50 pts. 5 jours complétés = bonus final de +200 pts.
+            ${currentUser.dailyDoneToday && daysDone < 5
+              ? '⏰ Reviens demain pour le prochain défi quotidien !'
+              : '3 questions par jour. Sans-faute = +50 pts. 5 jours complétés = bonus final de +200 pts.'}
           </div>
           <div class="mode-meta">
             <div class="mode-meta-item">MAX <strong>275 pts/j</strong></div>
@@ -771,6 +778,14 @@ async function finishQuiz() {
     currentUser.dailyChallenges[day] = {score, perfect, streakBonus: perfect ? 50 : 0};
     const daysDone = Object.keys(currentUser.dailyChallenges).length;
     if (daysDone >= 5) currentUser.finalBonusGranted = true;
+    
+    // Marque comme fait aujourd'hui pour bloquer le bouton
+    currentUser.dailyDoneToday = true;
+    const today = new Date();
+    currentUser.lastDailyDate = today.getFullYear() + '-' + 
+                                String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                                String(today.getDate()).padStart(2, '0');
+    
     state.lastResult = {mode: 'daily', score, perfect, streakBonus: perfect ? 50 : 0, perQuestion: results};
     
     // Enregistre dans Google Sheets
