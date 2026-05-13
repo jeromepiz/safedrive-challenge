@@ -415,8 +415,8 @@ function renderLogin(app) {
           <input type="text" id="firstName" placeholder="Jérôme" maxlength="30" required>
         </div>
         <div class="field">
-          <label>Agence / Équipe</label>
-          <input type="text" id="service" placeholder="ex. Lyon QSE, Valence Administratif, Lyon VVB…" maxlength="40" required>
+          <label>Service / Équipe</label>
+          <input type="text" id="service" placeholder="ex. QSE, Logistique, RH…" maxlength="40" required>
         </div>
         <div id="error" class="error-msg" style="display:none;"></div>
         <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Démarrer le moteur →</button>
@@ -448,15 +448,15 @@ function renderLogin(app) {
       const sheetUser = await loadUserFromSheets(fn, srv);
       
       if (sheetUser) {
-        // Utilisateur trouvé dans Sheets
+        // Utilisateur trouvé dans Sheets - conversion sécurisée
         user = {
           id,
           firstName: fn,
           service: srv,
-          grandPrixDone: sheetUser.grandPrixDone,
-          grandPrixScore: sheetUser.grandPrixScore,
+          grandPrixDone: sheetUser.grandPrixDone === true,
+          grandPrixScore: Number(sheetUser.grandPrixScore) || 0,
           dailyChallenges: sheetUser.dailyChallenges || {},
-          finalBonusGranted: sheetUser.finalBonusGranted
+          finalBonusGranted: sheetUser.finalBonusGranted === true
         };
       } else {
         // Nouvel utilisateur
