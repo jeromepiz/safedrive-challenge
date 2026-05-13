@@ -631,7 +631,7 @@ function renderQuiz(app, currentUser) {
           </div>
           <div class="feedback-text">${q.explanation}</div>
         </div>
-        <button onclick="nextQuestion();" class="btn btn-primary" style="margin-top: 16px;">
+        <button id="nextBtn" onclick="handleNext();" class="btn btn-primary" style="margin-top: 16px;">
           ${isLast ? 'Voir mon résultat →' : 'Question suivante →'}
         </button>
       ` : ''}
@@ -706,6 +706,26 @@ function selectOption(optionIndex, timeout = false) {
   render();
 }
 
+function handleNext() {
+  // Désactive immédiatement le bouton pour éviter les doubles clics
+  const btn = document.getElementById('nextBtn');
+  if (btn) {
+    if (btn.disabled) return; // Déjà cliqué
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'not-allowed';
+    
+    const questionIndex = state.quizConfig.currentQuestion || 0;
+    const isLast = questionIndex === state.quizConfig.questions.length - 1;
+    
+    if (isLast) {
+      btn.textContent = 'Enregistrement...';
+    }
+  }
+  
+  nextQuestion();
+}
+
 function nextQuestion() {
   const questionIndex = state.quizConfig.currentQuestion || 0;
   const isLast = questionIndex === state.quizConfig.questions.length - 1;
@@ -729,6 +749,10 @@ function nextQuestion() {
 }
 
 async function finishQuiz() {
+  // Protection contre les doubles clics
+  if (state.quizConfig.finishing) return;
+  state.quizConfig.finishing = true;
+  
   const {mode, day, results} = state.quizConfig;
   const currentUser = state.users.find(u => u.id === state.currentUserId);
   
