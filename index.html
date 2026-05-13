@@ -177,7 +177,7 @@
 // ⚠️ REMPLACE CET URL PAR TON APPS SCRIPT DEPLOYMENT URL
 // Après avoir déployé ton Apps Script, tu auras une URL qui ressemble à :
 // https://script.google.com/macros/d/[ID]/usw
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/library/d/1GPbHvdx1ciL1DM8liC_rgX01a92K2wx3CGCb8TBQtHNz0KrncA2APD66/3';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYjmzfRFZL6UXZcmnDxty91Zfj6JgvQpjjXlRTV-61DJEGTH2pux3CtnWnDajX56r7/exec';
 
 // ============ DATA ============
 const GRAND_PRIX_QUESTIONS = [
@@ -549,7 +549,7 @@ function renderDashboard(app, currentUser) {
               <div class="mode-title">🔧 Contrôle Technique</div>
             </div>
             <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: ${dailyBlocked ? '#00d68f' : '#ffd60a'}; letter-spacing: 0.1em;">
-              ${daysDone >= 5 ? '✓ COMPLET' : currentUser.dailyDoneToday ? '✓ FAIT AUJOURD\\'HUI' : '▶ DÉFI'}
+              ${daysDone >= 5 ? '✓ COMPLET' : currentUser.dailyDoneToday ? '✓ FAIT' : '▶ DÉFI'}
             </span>
           </div>
           <div class="mode-desc">
