@@ -168,6 +168,49 @@
         .empty { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
         .hint { margin-top: 20px; padding: 12px; background: rgba(0,224,255,0.05); border: 1px solid rgba(0,224,255,0.2); border-radius: 8px; font-size: 11px; color: #94a3b8; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; text-align: center; }
         .loading { text-align: center; padding: 20px; color: #94a3b8; font-size: 12px; }
+        
+        /* Badge NOUVEAU animé */
+        .new-badge {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          background: #ffd60a;
+          color: #050b1a;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          padding: 4px 10px;
+          border-radius: 100px;
+          box-shadow: 0 0 20px rgba(255, 214, 10, 0.8);
+          animation: pulseBadge 1.5s ease-in-out infinite;
+          z-index: 5;
+        }
+        
+        @keyframes pulseBadge {
+          0%, 100% { 
+            transform: scale(1); 
+            box-shadow: 0 0 20px rgba(255, 214, 10, 0.8);
+          }
+          50% { 
+            transform: scale(1.15); 
+            box-shadow: 0 0 30px rgba(255, 214, 10, 1), 0 0 50px rgba(255, 214, 10, 0.5);
+          }
+        }
+        
+        .mode-card-new {
+          animation: glowPulse 2s ease-in-out infinite;
+          border-color: #ffd60a !important;
+        }
+        
+        @keyframes glowPulse {
+          0%, 100% { 
+            box-shadow: 0 0 0 0 rgba(255, 214, 10, 0);
+          }
+          50% { 
+            box-shadow: 0 0 30px rgba(255, 214, 10, 0.4);
+          }
+        }
     </style>
 </head>
 <body>
@@ -177,7 +220,7 @@
 // ⚠️ REMPLACE CET URL PAR TON APPS SCRIPT DEPLOYMENT URL
 // Après avoir déployé ton Apps Script, tu auras une URL qui ressemble à :
 // https://script.google.com/macros/d/[ID]/usw
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYjmzfRFZL6UXZcmnDxty91Zfj6JgvQpjjXlRTV-61DJEGTH2pux3CtnWnDajX56r7/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/library/d/1GPbHvdx1ciL1DM8liC_rgX01a92K2wx3CGCb8TBQtHNz0KrncA2APD66/4';
 
 // ============ DATA ============
 const GRAND_PRIX_QUESTIONS = [
@@ -194,7 +237,7 @@ const GRAND_PRIX_QUESTIONS = [
   { id: "gp11", theme: "Fatigue", vital: false, question: "Combien de temps d'éveil dégrade autant la vigilance que 0,5 g/L d'alcool ?", options: ["12 heures", "17 heures", "24 heures", "8 heures"], answer: 1, explanation: "Étude INRS : 17 heures d'éveil équivalent en termes de vigilance à 0,5 g/L d'alcoolémie." },
   { id: "gp12", theme: "Code", vital: false, question: "Sur un rond-point classique en France, qui a la priorité ?", options: ["Celui qui entre", "Celui qui est déjà engagé", "Celui qui vient de droite", "Le plus rapide"], answer: 1, explanation: "Carrefour à sens giratoire : priorité à celui qui circule déjà sur l'anneau." },
   { id: "gp13", theme: "Distance", vital: false, question: "En cas de pluie, la distance de freinage est multipliée par :", options: ["1,2", "1,5", "2", "3"], answer: 2, explanation: "Adhérence dégradée : la distance de freinage est doublée par rapport au sol sec." },
-  { id: "gp14", theme: "Mobilité douce", vital: false, question: "Un trottinettiste peut-il rouler sur le trottoir ?", options: ["Oui à allure modérée", "Non, c'est interdit", "Oui si pas de piste cyclable", "Oui si j'ai un enfant avec moi"], answer: 1, explanation: "Interdit depuis 2019, sauf trottinette tenue à la main (mode piéton autorisé)." },
+  { id: "gp14", theme: "Mobilité douce", vital: false, question: "Un trottinettiste peut-il rouler sur le trottoir ?", options: ["Oui à allure modérée", "Non, c'est interdit", "Oui si pas de piste cyclable", "Oui à pied seulement"], answer: 1, explanation: "Interdit depuis 2019, sauf trottinette tenue à la main (mode piéton autorisé)." },
   { id: "gp15", theme: "Piétons", vital: true, question: "Un piéton s'engage sur un passage protégé. Vous devez :", options: ["Klaxonner", "Ralentir si possible", "Vous arrêter obligatoirement", "Passer si vous êtes plus rapide"], answer: 2, explanation: "Article R415-11. Refus de priorité piéton = 4 points retirés et 135 € d'amende." },
   { id: "gp16", theme: "Code", vital: false, question: "À quelle distance d'un passage piéton est-il interdit de stationner ?", options: ["3 mètres", "5 mètres en amont", "10 mètres", "Aucune restriction"], answer: 1, explanation: "Depuis 2015, 5 mètres en amont sont obligatoirement libres pour la visibilité des piétons." },
   { id: "gp17", theme: "Alcool", vital: false, question: "Un verre d'alcool standard fait monter l'alcoolémie d'environ :", options: ["0,1 g/L", "0,25 g/L", "0,5 g/L", "Cela dépend uniquement du poids"], answer: 1, explanation: "Règle générale : 1 verre = 0,25 g/L. Variable selon corpulence, sexe et repas." },
@@ -412,11 +455,11 @@ function renderLogin(app) {
       <form id="loginForm">
         <div class="field">
           <label>Prénom</label>
-          <input type="text" id="firstName" placeholder="Votre prénom" maxlength="30" required>
+          <input type="text" id="firstName" placeholder="Jérôme" maxlength="30" required>
         </div>
         <div class="field">
-          <label>Agence / Équipe</label>
-          <input type="text" id="service" placeholder="ex. Lyon QSE, Valence Exploit, Grenoble Adm…" maxlength="40" required>
+          <label>Service / Équipe</label>
+          <input type="text" id="service" placeholder="ex. QSE, Logistique, RH…" maxlength="40" required>
         </div>
         <div id="error" class="error-msg" style="display:none;"></div>
         <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Démarrer le moteur →</button>
@@ -457,8 +500,9 @@ function renderLogin(app) {
           grandPrixScore: Number(sheetUser.grandPrixScore) || 0,
           dailyChallenges: sheetUser.dailyChallenges || {},
           finalBonusGranted: sheetUser.finalBonusGranted === true,
-          lastDailyDate: sheetUser.lastDailyDate || '',
-          dailyDoneToday: sheetUser.dailyDoneToday === true
+          lastDailyTimestamp: sheetUser.lastDailyTimestamp || '',
+          dailyDoneToday: sheetUser.dailyDoneToday === true,
+          hoursSinceLastDaily: sheetUser.hoursSinceLastDaily || 999
         };
       } else {
         // Nouvel utilisateur
@@ -470,8 +514,9 @@ function renderLogin(app) {
           grandPrixScore: 0,
           dailyChallenges: {},
           finalBonusGranted: false,
-          lastDailyDate: '',
-          dailyDoneToday: false
+          lastDailyTimestamp: '',
+          dailyDoneToday: false,
+          hoursSinceLastDaily: 999
         };
       }
       
@@ -490,6 +535,16 @@ function renderDashboard(app, currentUser) {
   const daysDone = Object.keys(currentUser.dailyChallenges).length;
   const nextDay = Math.min(daysDone + 1, 5);
   const dailyBlocked = currentUser.dailyDoneToday || daysDone >= 5;
+  
+  // Détection : nouveau défi disponible (au moins 1 défi fait + plus de 24h écoulées + reste des défis)
+  const isNewDailyAvailable = daysDone > 0 && daysDone < 5 && !currentUser.dailyDoneToday;
+  
+  // Calcul du temps restant avant le prochain défi
+  let timeRemaining = '';
+  if (currentUser.dailyDoneToday && currentUser.hoursSinceLastDaily < 24) {
+    const hoursLeft = Math.ceil(24 - currentUser.hoursSinceLastDaily);
+    timeRemaining = hoursLeft + 'h';
+  }
   
   app.innerHTML = `
     <div style="animation: fadeIn 0.4s ease;">
@@ -542,7 +597,8 @@ function renderDashboard(app, currentUser) {
           </div>
         </button>
 
-        <button class="mode-card" onclick="launchDaily();" ${dailyBlocked ? 'disabled' : ''}>
+        <button class="mode-card ${isNewDailyAvailable ? 'mode-card-new' : ''}" style="position: relative;" onclick="launchDaily();" ${dailyBlocked ? 'disabled' : ''}>
+          ${isNewDailyAvailable ? '<div class="new-badge">✨ NOUVEAU !</div>' : ''}
           <div class="mode-card-header">
             <div>
               <div class="mode-tag">BONUS QUOTIDIEN · JOUR ${nextDay}</div>
@@ -554,7 +610,7 @@ function renderDashboard(app, currentUser) {
           </div>
           <div class="mode-desc">
             ${currentUser.dailyDoneToday && daysDone < 5
-              ? '⏰ Reviens demain pour le prochain défi quotidien !'
+              ? '⏰ Prochain défi disponible dans ' + timeRemaining
               : '3 questions par jour. Sans-faute = +50 pts. 5 jours complétés = bonus final de +200 pts.'}
           </div>
           <div class="mode-meta">
@@ -781,10 +837,8 @@ async function finishQuiz() {
     
     // Marque comme fait aujourd'hui pour bloquer le bouton
     currentUser.dailyDoneToday = true;
-    const today = new Date();
-    currentUser.lastDailyDate = today.getFullYear() + '-' + 
-                                String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                                String(today.getDate()).padStart(2, '0');
+    currentUser.lastDailyTimestamp = new Date().toISOString();
+    currentUser.hoursSinceLastDaily = 0;
     
     state.lastResult = {mode: 'daily', score, perfect, streakBonus: perfect ? 50 : 0, perQuestion: results};
     
