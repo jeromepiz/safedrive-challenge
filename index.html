@@ -711,7 +711,13 @@ function renderQuiz(app, currentUser) {
 function startTimer() {
   if (state.quizConfig.timerInterval) clearInterval(state.quizConfig.timerInterval);
   
-  state.quizConfig.timerInterval = setInterval(() => {
+  const intervalId = setInterval(() => {
+    // Protection : si le quiz est terminé, arrête le timer
+    if (!state.quizConfig) {
+      clearInterval(intervalId);
+      return;
+    }
+    
     const elapsed = Date.now() - state.quizConfig.startTime;
     const remaining = Math.max(0, TIME_LIMIT_MS - elapsed);
     const seconds = Math.ceil(remaining / 1000);
@@ -729,14 +735,16 @@ function startTimer() {
     if (ring && remaining < 5000) ring.classList.add('urgent');
     
     if (remaining === 0) {
-      clearInterval(state.quizConfig.timerInterval);
-      if (!state.quizConfig.answered) {
+      clearInterval(intervalId);
+      if (state.quizConfig && !state.quizConfig.answered) {
         state.quizConfig.answered = true;
         state.quizConfig.selectedOption = -1;
         render();
       }
     }
   }, 100);
+  
+  state.quizConfig.timerInterval = intervalId;
 }
 
 function selectOption(optionIndex, timeout = false) {
